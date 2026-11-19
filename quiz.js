@@ -6,14 +6,15 @@
 
   // ---------- fit: แนวนอน = 1280x720 · มือถือแนวตั้ง = กว้าง 480 สูงตามจอ ----------
   function fit() {
-    const f = $("#frame"), port = innerHeight > innerWidth;
+    const de = document.documentElement, vw = de.clientWidth || innerWidth, vh = de.clientHeight || innerHeight;
+    const f = $("#frame"), port = vh > vw;
     document.body.classList.toggle("port", port);
-    const W = port ? 480 : 1280, H = port ? Math.max(800, Math.round(480 * innerHeight / innerWidth)) : 720;
-    const s = Math.min(innerWidth / W, innerHeight / H);
+    const W = port ? 480 : 1280, H = port ? Math.max(800, Math.round(480 * vh / vw)) : 720;
+    const s = Math.min(vw / W, vh / H);
     f.style.width = W + "px"; f.style.height = H + "px";
     f.style.transform = `translate(-50%,-50%) scale(${s})`; f.style.transformOrigin = "center center";
   }
-  addEventListener("resize", fit); fit();
+  addEventListener("resize", fit); addEventListener("orientationchange", () => setTimeout(fit, 150)); fit();
 
   // ---------- sound (WebAudio synth) ----------
   let AC = null, muted = false;

@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Koriko Quiz — ช่วงนี้คุณอยู่ในโหมดไหน?</title>
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>
@@ -12,11 +12,12 @@
     --cream:#FFF6E0; --cream-d:#f0e2bf; --ink:#1d1d1b; --muted:#8a7f68;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:#1b2a1a;overflow:hidden}
+  html,body{margin:0;height:100%;background:#1b2a1a;overflow:hidden;overscroll-behavior:none}
+  body{position:fixed;inset:0;width:100%}
   body{font-family:'Mitr',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
   canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   button{font-family:inherit;cursor:pointer}
-  #frame{position:absolute;left:50%;top:50%;width:1280px;height:720px;background:var(--green);overflow:hidden}
+  #frame{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform:translate(-50%,-50%) scale(0.01);background:var(--green);overflow:hidden}
   .screen{position:absolute;inset:0;display:none}
   .screen.on{display:block}
 
