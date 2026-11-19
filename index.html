@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Koriko Quiz — ช่วงนี้คุณอยู่ในโหมดไหน?</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  :root{
+    --green:#4B8F48; --green-d:#3a7238; --green-dd:#2d5e2b;
+    --red:#E0443A; --red-d:#b5321f; --gold:#F7C04A; --orange:#F2A23A;
+    --cream:#FFF6E0; --cream-d:#f0e2bf; --ink:#1d1d1b; --muted:#8a7f68;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#1b2a1a;overflow:hidden}
+  body{font-family:'Mitr',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+  canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+  button{font-family:inherit;cursor:pointer}
+  #frame{position:absolute;left:50%;top:50%;width:1280px;height:720px;background:var(--green);overflow:hidden}
+  .screen{position:absolute;inset:0;display:none}
+  .screen.on{display:block}
+
+  .top{position:absolute;left:24px;right:24px;top:12px;height:54px;display:flex;align-items:center;gap:16px}
+  .logo{font:700 34px 'Pixelify Sans';color:var(--red);letter-spacing:1px;text-shadow:3px 3px 0 var(--ink),-1px -1px 0 var(--gold);line-height:1}
+  .logo small{display:block;font-size:13px;color:var(--cream);text-shadow:2px 2px 0 var(--ink);letter-spacing:3px;margin-top:2px}
+  .bubble{flex:1;background:var(--cream);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:8px 14px;font-size:17px;position:relative;min-height:44px;display:flex;align-items:center}
+  .bubble:before{content:"";position:absolute;left:-12px;top:12px;border:7px solid transparent;border-right-color:var(--ink)}
+  .bubble b.who{color:var(--red);margin-right:8px;font-weight:600}
+  .iconbtn{width:44px;height:44px;background:var(--cream);border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);font-size:18px}
+  .btn{border:4px solid var(--ink);box-shadow:5px 5px 0 var(--ink);font:700 22px 'Pixelify Sans','Mitr';padding:8px 18px;color:#fff;background:var(--red)}
+  .btn:hover{background:#ec5247}
+  .btn.alt{background:var(--cream);color:var(--ink);font-family:'Mitr';font-weight:600;font-size:17px}
+  .btn:active,.iconbtn:active,.opt:active{transform:translate(2px,2px);box-shadow:none}
+
+  #stage{position:absolute;left:24px;top:78px;width:768px;height:432px;border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);box-sizing:content-box;background:#f4ecd9}
+  #stage canvas{width:768px;height:432px}
+
+  /* ---------- TITLE ---------- */
+  #title .card{position:absolute;left:830px;top:78px;width:426px;height:432px;background:var(--cream);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:26px 28px;display:flex;flex-direction:column}
+  #title h1{margin:0;font:700 40px/1.15 'Mitr';}
+  #title h1 span{color:var(--red)}
+  #title p{font-size:18px;line-height:1.5;margin:14px 0}
+  #title .modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+  #title .modes div{border:3px solid var(--ink);padding:4px 8px;font:20px 'VT323';display:flex;align-items:center;gap:8px}
+  #title .modes i{width:14px;height:14px;border:2px solid var(--ink);display:inline-block}
+  #go{position:absolute;left:24px;top:540px;width:776px;height:72px;font-size:34px;letter-spacing:6px;display:flex;align-items:center;justify-content:center;gap:16px}
+  #go span{font:600 17px 'Mitr';letter-spacing:0}
+  .note{position:absolute;left:830px;top:540px;width:426px;color:var(--cream);font-size:13px;line-height:1.5}
+
+  /* ---------- QUIZ ---------- */
+  .qpanel{position:absolute;left:830px;top:78px;width:426px;bottom:24px;background:var(--cream);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:18px 20px;display:flex;flex-direction:column}
+  .qno{font:24px 'VT323';color:var(--muted);display:flex;justify-content:space-between}
+  .qtext{font-size:26px;font-weight:600;line-height:1.3;margin:6px 0 16px;min-height:68px}
+  .opt{display:block;width:100%;text-align:left;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px 14px;margin:0 0 14px;font-size:18px;line-height:1.35}
+  .opt:hover{background:var(--gold)}
+  .back{margin-top:auto;background:none;border:none;color:var(--muted);font-size:14px;text-align:left;padding:0}
+  .dots{position:absolute;left:24px;top:540px;width:776px;display:grid;grid-template-columns:repeat(8,1fr);gap:10px}
+  .dots i{height:26px;border:3px solid var(--ink);background:#e9dcb8;box-shadow:3px 3px 0 var(--ink)}
+  .legend{position:absolute;left:24px;top:600px;width:776px;display:flex;gap:18px;color:var(--cream);font-size:15px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend i{width:16px;height:16px;border:2px solid var(--ink);display:inline-block}
+
+  /* ---------- CUTSCENE ---------- */
+  #cut{background:#000}
+  #cut canvas{width:1280px;height:720px}
+  .lb{position:absolute;left:0;right:0;height:0;background:#000;transition:height .35s steps(6);z-index:2}
+  .lb.t{top:0} .lb.b{bottom:0}
+  #cut.bars .lb{height:92px}
+  #skip{position:absolute;right:22px;bottom:20px;z-index:3;background:transparent;border:2px solid #777;color:#bbb;font:18px 'VT323';padding:4px 12px}
+  #shake{position:absolute;inset:0}
+
+  /* ---------- RESULT ---------- */
+  .rcard{position:absolute;left:24px;top:78px;width:776px;bottom:24px;background:var(--cream);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:0 28px 18px;animation:rise .45s steps(6)}
+  @keyframes rise{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+  .ribbon{margin:-4px 0 0 -32px;width:fit-content;background:var(--c);color:var(--ink);border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:4px 30px;font:700 40px 'Pixelify Sans','Mitr';letter-spacing:2px}
+  .rhead{display:flex;gap:20px;align-items:flex-start;margin-top:14px}
+  .rhead canvas{width:120px;height:120px;border:3px solid var(--ink);background:#fff;flex-shrink:0}
+  .era{display:inline-block;background:var(--ink);color:var(--cream);font:600 20px 'Mitr';padding:2px 12px;margin-bottom:8px}
+  .desc{font-size:19px;line-height:1.5;margin:0}
+  .punch{font-size:24px;font-weight:600;margin:14px 0 4px;padding:6px 12px;background:var(--c);border:3px solid var(--ink);width:fit-content;box-shadow:3px 3px 0 var(--ink)}
+  .mixh{font:22px 'VT323';margin:16px 0 4px;color:var(--muted)}
+  .mix{display:grid;grid-template-columns:200px 1fr 52px;gap:8px;align-items:center;font-size:15px;margin:5px 0}
+  .mix .t{height:18px;border:2px solid var(--ink);background:#efe3c4;position:relative}
+  .mix .t i{position:absolute;left:0;top:0;bottom:0;background:var(--c);animation:grow .9s steps(9)}
+  @keyframes grow{from{width:0}}
+  .yours{display:flex;align-items:center;gap:18px;margin-top:10px}
+  .yours canvas{width:204px;height:150px}
+  .yours div{font-size:15px;line-height:1.45;color:#4a4436}
+  .yours b{font:22px 'VT323';color:var(--ink);display:block}
+  .mix .n{font:22px 'VT323';text-align:right}
+  .mix.win{font-weight:600}
+
+  .rside{position:absolute;left:830px;top:78px;width:426px;bottom:24px;display:flex;flex-direction:column;gap:12px}
+  .panel{background:var(--cream);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:10px 14px}
+  .panel h3{margin:0 0 4px;font:20px 'VT323';color:var(--muted);letter-spacing:1px}
+  .prod{flex:1;display:flex;flex-direction:column}
+  .pw{display:grid;grid-template-columns:200px 1fr;gap:12px;align-items:center;flex:1}
+  .prod b{font-size:19px;display:block;line-height:1.3;margin-bottom:6px}
+  .packs{position:relative;height:210px}
+  .pk{position:absolute;left:50%;top:50%;text-align:center;transform:translate(-50%,-50%) rotate(var(--r,0deg))}
+  .pk .in{animation:drop .6s steps(6) both,bob 1.2s steps(2) .6s infinite;animation-delay:var(--d,0s),calc(var(--d,0s) + .6s)}
+  @keyframes drop{0%{transform:translateY(-120px);opacity:0}60%{transform:translateY(8px);opacity:1}100%{transform:none}}
+  @keyframes bob{50%{transform:translateY(-3px)}}
+  .pk canvas{margin:0 auto}
+  .pk em{display:inline-block;font-style:normal;font-size:12.5px;font-weight:600;background:var(--ink);color:var(--cream);padding:1px 8px;margin-top:4px;white-space:nowrap}
+  .spk{position:absolute;width:6px;height:6px;background:#fff;box-shadow:0 0 0 2px var(--gold);animation:tw 1s steps(2) infinite}
+  @keyframes tw{50%{opacity:0}}
+  .prod span{font-size:15px;color:#4a4436}
+  .tagp b{display:block;font-size:17px;margin-bottom:8px}
+  .tagp .row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .tagp button{background:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);font-size:14px;padding:6px 2px}
+  .coupon{border:3px dashed var(--ink);background:#fff;padding:10px 14px;display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center;position:relative}
+  .coupon canvas{width:110px;height:84px}
+  .coupon b{font-size:20px;display:block}
+  .coupon .big{font:34px 'VT323';color:var(--red);line-height:1}
+  .coupon span{font-size:13.5px;line-height:1.35;display:block;margin-top:2px}
+  .coupon .scis{position:absolute;top:-14px;left:12px;background:var(--cream);font-size:16px;padding:0 4px}
+  .ract{display:flex;gap:12px;margin-top:auto}
+  .ract .btn{flex:1;font-size:18px;padding:8px}
+</style>
+</head>
+<body>
+<div id="frame">
+
+  <!-- ================= TITLE ================= -->
+  <section id="title" class="screen on">
+    <div class="top">
+      <div class="logo">KORIKO<small>SANDWICH ERA QUIZ</small></div>
+      <div class="bubble"><b class="who">เชฟนินจา:</b><span>วันนี้เชฟจะทำแซนวิชที่เป็นตัวคุณ ตอบ 8 ข้อแล้วดูกันว่าออกมาเป็นยังไง!</span></div>
+      <button class="iconbtn mute" title="เสียง">♪</button>
+    </div>
+    <div id="stage"><canvas id="cv" width="192" height="108"></canvas></div>
+    <div class="card">
+      <h1>ช่วงนี้คุณอยู่ใน<br><span>โหมดไหน?</span></h1>
+      <p id="hook"></p>
+      <div class="modes" id="modes"></div>
+    </div>
+    <button class="btn" id="go">START <span>เริ่มประกบแซนวิช</span></button>
+    <div class="note">ไม่มีคำตอบถูกผิด · 1 คำตอบ = ไส้ 1 ชั้น<br>จบแล้วรับคูปองลดราคาสินค้า Koriko</div>
+  </section>
+
+  <!-- ================= QUIZ ================= -->
+  <section id="quiz" class="screen">
+    <div class="top">
+      <div class="logo">KORIKO<small>SANDWICH ERA QUIZ</small></div>
+      <div class="bubble"><b class="who">เชฟนินจา:</b><span id="say"></span></div>
+      <button class="iconbtn mute" title="เสียง">♪</button>
+    </div>
+    <div class="qpanel">
+      <div class="qno"><span id="qno"></span><span>SANDWICH ERA</span></div>
+      <div class="qtext" id="qtext"></div>
+      <div id="opts"></div>
+      <button class="back" id="back">◀ ย้อนกลับ</button>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <!-- ================= CUTSCENE ================= -->
+  <section id="cut" class="screen">
+    <div id="shake"><canvas id="cc" width="160" height="90"></canvas></div>
+    <div class="lb t"></div><div class="lb b"></div>
+    <button id="skip">ข้าม ▶▶</button>
+  </section>
+
+  <!-- ================= RESULT ================= -->
+  <section id="result" class="screen">
+    <div class="top">
+      <div class="logo">KORIKO<small>SANDWICH ERA QUIZ</small></div>
+      <div class="bubble"><b class="who">เชฟนินจา:</b><span id="rsay"></span></div>
+      <button class="iconbtn mute" title="เสียง">♪</button>
+    </div>
+    <div class="rcard" id="rcard">
+      <div class="ribbon" id="rname"></div>
+      <div class="rhead">
+        <canvas id="ricon" width="24" height="24"></canvas>
+        <div><div class="era" id="rera"></div><p class="desc" id="rdesc"></p></div>
+      </div>
+      <div class="punch" id="rpunch"></div>
+      <div class="mixh">YOUR SANDWICH MIX · ส่วนผสมโหมดของคุณ</div>
+      <div id="rmix"></div>
+      <div class="yours"><canvas id="rsand"></canvas><div><b>YOUR SANDWICH · 8 ชั้น</b>แต่ละชั้นคือคำตอบของคุณ<br>ครึ่งซ้ายกลายเป็นคูปอง ✂ ครึ่งขวารอคนที่คุณแท็ก</div></div>
+    </div>
+    <div class="rside">
+      <div class="panel prod"><h3>🍽 ของกินที่เข้ากับโหมดนี้</h3><div class="pw"><div class="packs" id="rpacks"></div><div><b id="rprod"></b><span id="rwhy"></span></div></div></div>
+      <div class="panel tagp"><b id="rtag"></b><div class="row"><button>แท็กใน IG / FB</button><button>ส่งทาง LINE</button><button>บันทึกรูปผล</button></div></div>
+      <div class="coupon">
+        <span class="scis">✂</span>
+        <canvas id="rhalf"></canvas>
+        <div><b>คูปองครึ่งแซนวิช</b><div class="big" id="rsolo"></div>
+          <span>เชฟฟันแซนวิชของคุณเป็นสองครึ่งแล้ว <b style="display:inline;font-size:13.5px">อีกครึ่งอยู่กับคนที่คุณแท็ก</b> ชวนมาเล่น แล้วประกบคูปองกัน ลดเพิ่มเป็น <span id="rpair" style="display:inline"></span> ทั้งคู่</span></div>
+      </div>
+      <div class="ract">
+        <button class="btn alt" id="again">↺ เล่นอีกครั้ง</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+<script src="data.js"></script>
+<script src="art.js"></script>
+<script src="packs.js"></script>
+<script src="quiz.js"></script>
+</body>
+</html>
