@@ -4,9 +4,13 @@
   const $ = s => document.querySelector(s);
   const ORDER = ["ME", "YOU", "MORE", "TOGETHER"];
 
-  // ---------- fit 1280x720 ----------
+  // ---------- fit: แนวนอน = 1280x720 · มือถือแนวตั้ง = กว้าง 480 สูงตามจอ ----------
   function fit() {
-    const f = $("#frame"), s = Math.min(innerWidth / 1280, innerHeight / 720);
+    const f = $("#frame"), port = innerHeight > innerWidth;
+    document.body.classList.toggle("port", port);
+    const W = port ? 480 : 1280, H = port ? Math.max(800, Math.round(480 * innerHeight / innerWidth)) : 720;
+    const s = Math.min(innerWidth / W, innerHeight / H);
+    f.style.width = W + "px"; f.style.height = H + "px";
     f.style.transform = `translate(-50%,-50%) scale(${s})`; f.style.transformOrigin = "center center";
   }
   addEventListener("resize", fit); fit();

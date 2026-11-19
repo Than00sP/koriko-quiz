@@ -117,6 +117,45 @@
   .coupon .scis{position:absolute;top:-14px;left:12px;background:var(--cream);font-size:16px;padding:0 4px}
   .ract{display:flex;gap:12px;margin-top:auto}
   .ract .btn{flex:1;font-size:18px;padding:8px}
+
+  /* ---------- มือถือแนวตั้ง (body.port · เฟรมกว้าง 480 สูงตามจอ) ---------- */
+  .port #title.on,.port #quiz.on,.port #result.on{display:flex;flex-direction:column;gap:16px;padding:12px 18px 22px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .port #title>*,.port #quiz>*,.port #result>*{position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:auto!important;flex-shrink:0}
+  .port .top{order:0;height:auto;min-height:54px;gap:12px}
+  .port .logo{font-size:26px}
+  .port .logo small{font-size:10px;letter-spacing:2px}
+  .port .bubble{font-size:15px;line-height:1.4;padding:6px 12px;display:block}
+  .port .bubble b.who{white-space:nowrap}
+  .port #stage{order:1;height:auto}
+  .port #stage canvas{width:100%;height:auto}
+  .port #title .card{order:2;height:auto;flex:1 0 auto;padding:20px 22px}
+  .port #title h1{font-size:34px}
+  .port #title p{font-size:17px;margin:10px 0 16px}
+  .port #go{order:3;height:72px;font-size:30px}
+  .port .note{order:4;text-align:center}
+  .port .dots{order:2;gap:7px}
+  .port .dots i{height:20px}
+  .port .legend{order:3;font-size:14px;margin-top:-6px}
+  .port .qpanel{order:4;flex:1 0 auto}
+  .port .qtext{font-size:23px;min-height:0;margin:4px 0 14px}
+  .port .opt{font-size:18px;padding:12px 14px;margin-bottom:12px}
+  .port .back{font-size:15px;padding-top:6px}
+  .port .rcard{order:1;padding:0 18px 18px}
+  .port .ribbon{margin-left:-22px;font-size:32px;padding:4px 20px}
+  .port .rhead{gap:14px}
+  .port .rhead canvas{width:96px;height:96px}
+  .port .desc{font-size:17px}
+  .port .punch{font-size:20px}
+  .port .mix{grid-template-columns:140px 1fr 46px;font-size:14px}
+  .port .yours{flex-wrap:wrap;gap:10px}
+  .port .rside{order:2}
+  .port .prod{flex:none}
+  .port .pw{grid-template-columns:190px 1fr}
+  .port .packs{height:190px}
+  .port .ract{margin-top:4px}
+  .port .ract .btn{padding:12px}
+  .port #cut canvas{width:100%;height:auto}
+  .port #shake{display:flex;align-items:center}
 </style>
 </head>
 <body>
