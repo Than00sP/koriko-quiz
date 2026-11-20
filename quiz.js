@@ -296,6 +296,7 @@
   }
 
   // ---------- RESULT ----------
+  let last = null;
   function showResult() {
     const { win, pct, second } = score(), r = D.R[win];
     show("result"); SFX.fanfare();
@@ -328,7 +329,108 @@
     for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) { const c = s.get(x, y); if (!c) continue; const L = leftHalf(x, y); sp.px(x + (L ? 0 : 8), y + (L ? 4 : 0), c); }
     const rs = $("#rsand"), spc = sp.canvas(); rs.width = spc.width; rs.height = spc.height; rs.getContext("2d").drawImage(spc, 0, 0);
     iconOn = true; iconLoop(r.icon, r);
+    last = { win, pct, r, split: sp };
   }
+
+
+  // ---------- บันทึกรูปผล (การ์ด 1080x1350 · ขนาดโพสต์ IG) ----------
+  const seg = window.Intl && Intl.Segmenter ? new Intl.Segmenter("th", { granularity: "word" }) : null;
+  function wrap(g, text, maxW) {
+    const raw = seg ? [...seg.segment(text)].map(x => x.segment) : [...text], parts = [];
+    // รวมคำภาษาอังกฤษ/ตัวเลข/สัญลักษณ์ที่ติดกันให้เป็นก้อนเดียว เช่น [Y]% ไม่ให้ขาดกลางบรรทัด
+    raw.forEach(w => { const p = parts[parts.length - 1]; if (p && /^[^\s\u0E00-\u0E7F]+$/.test(w) && /[^\s\u0E00-\u0E7F]$/.test(p)) parts[parts.length - 1] = p + w; else parts.push(w); });
+    const lines = []; let cur = "";
+    parts.forEach(w => {
+      const t = cur + w, punct = /^["'”“)\].,!?…%]+$/.test(w);
+      if (g.measureText(t).width > maxW && cur && !punct) { lines.push(cur.trimEnd()); cur = w.trimStart(); } else cur = t;
+    });
+    if (cur) lines.push(cur); return lines;
+  }
+  function box(g, x, y, w, h, fill, bw = 6, sh = 10) {
+    g.fillStyle = "#1d1d1b"; g.fillRect(x + sh, y + sh, w, h); g.fillRect(x, y, w, h);
+    g.fillStyle = fill; g.fillRect(x + bw, y + bw, w - bw * 2, h - bw * 2);
+  }
+  async function makeCard() {
+    try { await document.fonts.ready; await Promise.all(["600 40px Mitr", "400 30px Mitr", "700 80px 'Pixelify Sans'", "40px VT323"].map(f => document.fonts.load(f, "กขABC"))); } catch (e) {}
+    const { win, pct, r, split } = last, W = 1080, H = 1350, INK = "#1d1d1b";
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.textBaseline = "top";
+    g.fillStyle = "#4B8F48"; g.fillRect(0, 0, W, H);
+    for (let y = 0; y < H; y += 24) for (let x = (y / 24) % 2 * 24; x < W; x += 48) { g.fillStyle = "#468a43"; g.fillRect(x, y, 24, 24); }
+    // โลโก้
+    g.font = "700 76px 'Pixelify Sans'"; g.fillStyle = INK; g.fillText("KORIKO", 64, 46); g.fillStyle = "#E0443A"; g.fillText("KORIKO", 58, 40);
+    g.font = "34px VT323"; g.fillStyle = "#FFF6E0"; g.fillText("SANDWICH ERA QUIZ", 62, 122);
+    g.font = "600 30px Mitr"; g.textAlign = "right"; g.fillText("ช่วงนี้คุณอยู่ในโหมดไหน?", W - 60, 70); g.textAlign = "left";
+    // การ์ดหลัก
+    const X = 56, Y = 186, CW = W - 122, CH = 1010;
+    box(g, X, Y, CW, CH, "#FFF6E0", 6, 12);
+    g.font = "700 84px 'Pixelify Sans'"; const rib = win + " ERA", rw = g.measureText(rib).width + 70;
+    box(g, X - 20, Y - 22, rw, 118, r.color, 6, 8); g.fillStyle = INK; g.fillText(rib, X + 15, Y - 4);
+    // ไอคอน + ชื่อโหมด + คำอธิบาย
+    let y = Y + 130; const ix = X + 44;
+    box(g, ix, y, 200, 200, "#ffffff", 5, 0);
+    g.drawImage(icon(r.icon, r, 40).canvas(), ix + 4, y + 4, 192, 192);
+    const tx = ix + 236, tw = X + CW - 44 - tx;
+    g.font = "600 40px Mitr"; const nw = g.measureText(r.name).width + 32;
+    g.fillStyle = INK; g.fillRect(tx, y, nw, 64); g.fillStyle = "#FFF6E0"; g.fillText(r.name, tx + 16, y + 6);
+    g.font = "400 30px Mitr"; g.fillStyle = INK;
+    let dy = y + 84; wrap(g, r.desc, tw).slice(0, 6).forEach(l => { g.fillText(l, tx, dy); dy += 46; });
+    y = Math.max(y + 230, dy + 16);
+    // punchline
+    g.font = "600 40px Mitr"; const pl = wrap(g, r.punch, CW - 120);
+    const ph = pl.length * 56 + 26, pw = Math.min(CW - 88, Math.max(...pl.map(l => g.measureText(l).width)) + 44);
+    box(g, ix, y, pw, ph, r.color, 5, 6); g.fillStyle = INK; pl.forEach((l, j) => g.fillText(l, ix + 22, y + 14 + j * 56));
+    y += ph + 40;
+    // ส่วนผสม
+    g.font = "36px VT323"; g.fillStyle = "#8a7f68"; g.fillText("YOUR SANDWICH MIX · ส่วนผสมโหมดของคุณ", ix, y); y += 54;
+    ORDER.slice().sort((a, b) => pct[b] - pct[a]).forEach(k => {
+      const R = D.R[k]; g.font = (k === win ? "600 " : "400 ") + "28px Mitr"; g.fillStyle = INK; g.fillText(R.name, ix, y + 2);
+      const bx = ix + 300, bw = CW - 88 - 300 - 100;
+      g.fillRect(bx, y + 6, bw, 30); g.fillStyle = "#efe3c4"; g.fillRect(bx + 3, y + 9, bw - 6, 24);
+      g.fillStyle = R.color; g.fillRect(bx + 3, y + 9, Math.round((bw - 6) * pct[k] / 100), 24);
+      g.font = "40px VT323"; g.fillStyle = INK; g.textAlign = "right"; g.fillText(pct[k] + "%", X + CW - 44, y); g.textAlign = "left";
+      y += 52;
+    });
+    y += 18;
+    // แซนวิชที่ถูกฟัน + คูปอง
+    const sc = Math.floor(Math.min(260 / split.h, 340 / split.w));
+    g.drawImage(split.canvas(), ix, y, split.w * sc, split.h * sc);
+    const cx2 = ix + split.w * sc + 36, cw2 = X + CW - 44 - cx2;
+    g.setLineDash([14, 10]); g.lineWidth = 4; g.strokeStyle = INK; g.fillStyle = "#ffffff";
+    g.fillRect(cx2, y + 10, cw2, 210); g.strokeRect(cx2, y + 10, cw2, 210); g.setLineDash([]);
+    g.font = "600 32px Mitr"; g.fillStyle = INK; g.fillText("✂ คูปองครึ่งแซนวิช", cx2 + 22, y + 30);
+    g.font = "64px VT323"; g.fillStyle = "#E0443A"; g.fillText("ลด " + D.coupon.solo, cx2 + 22, y + 76);
+    g.font = "400 24px Mitr"; g.fillStyle = "#4a4436";
+    wrap(g, "ชวนเพื่อนมาเล่นแล้วประกบคูปองกัน ลดเพิ่มเป็น " + D.coupon.pair + " ทั้งคู่", cw2 - 44).slice(0, 2).forEach((l, j) => g.fillText(l, cx2 + 22, y + 146 + j * 34));
+    // ท้ายรูป
+    const url = /^https?:$/.test(location.protocol) ? (location.host + location.pathname).replace(/index\.html$/, "").replace(/\/$/, "") : "than00sp.github.io/koriko-quiz";
+    g.font = "600 34px Mitr"; g.fillStyle = "#FFF6E0"; g.textAlign = "center";
+    g.fillText("มาเล่นด้วยกัน 👉 " + url, W / 2, H - 112);
+    g.font = "400 24px Mitr"; g.fillStyle = "#cfe3c8"; g.fillText("ตอบ 8 ข้อ ไม่ถึง 1 นาที · Koriko Sandwich Era Quiz", W / 2, H - 64);
+    g.textAlign = "left";
+    return c;
+  }
+  let shotBlob = null, shotUrl = null;
+  async function saveImage() {
+    if (!last) return; SFX.click();
+    const btn = $("#saveimg"), old = btn.textContent; btn.textContent = "กำลังทำรูป…"; btn.disabled = true;
+    try {
+      const c = await makeCard();
+      shotBlob = await new Promise(res => c.toBlob(res, "image/png"));
+      if (shotUrl) URL.revokeObjectURL(shotUrl);
+      shotUrl = URL.createObjectURL(shotBlob);
+      $("#shotimg").src = shotUrl;
+      const file = new File([shotBlob], "koriko-" + last.win.toLowerCase() + "-era.png", { type: "image/png" });
+      const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+      $("#shotshare").hidden = !canShare; $("#shotshare").onclick = () => navigator.share({ files: [file], title: "Koriko Sandwich Era Quiz" }).catch(() => {});
+      $("#shottip").textContent = matchMedia("(pointer:coarse)").matches ? "กดค้างที่รูปเพื่อบันทึกลงเครื่อง หรือกดปุ่มด้านล่าง" : "กดปุ่มบันทึกรูป หรือคลิกขวาที่รูป → บันทึกรูปภาพ";
+      $("#shot").classList.add("on");
+    } finally { btn.textContent = old; btn.disabled = false; }
+  }
+  $("#saveimg").onclick = saveImage;
+  $("#shotdl").onclick = () => { const a = document.createElement("a"); a.href = shotUrl; a.download = "koriko-" + last.win.toLowerCase() + "-era.png"; document.body.appendChild(a); a.click(); a.remove(); };
+  $("#shotx").onclick = () => $("#shot").classList.remove("on");
+  $("#shot").onclick = e => { if (e.target.id === "shot") $("#shot").classList.remove("on"); };
 
   // ---------- ทางลัดสำหรับตรวจ: index.html?r=YOU (ข้ามไปหน้าผล) · &cut=1 (ดูคัตซีนด้วย) ----------
   const qp = new URLSearchParams(location.search), jump = qp.get("r");
